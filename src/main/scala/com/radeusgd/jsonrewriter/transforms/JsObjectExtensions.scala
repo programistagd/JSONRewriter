@@ -1,7 +1,7 @@
 package com.radeusgd.jsonrewriter.transforms
 
 import com.radeusgd.jsonrewriter.implicits._
-import spray.json.{JsObject, JsValue}
+import spray.json.{JsArray, JsObject, JsValue}
 
 class JsObjectExtensions(val o: JsObject) extends AnyVal {
    def without(key: String): JsObject = JsObject(o.fields.filter({ case (k, _) => k != key }))
@@ -32,4 +32,17 @@ class JsObjectExtensions(val o: JsObject) extends AnyVal {
 
    def rename(from: String, to: String): JsObject = rename(Map(from -> to))
 
+   def removeKeys(keys: Iterable[String]): JsObject = keys.foldLeft(o)((acc: JsObject, key: String) => acc.without(key))
+
+   def groupAndRename(nameChanges: Map[String, String], groupName: String): JsObject = {
+      val grouped = nameChanges.map({ case (key: String, newKey: String) => (newKey, o.fields(key)) })
+      removeKeys(nameChanges.keys).updated(groupName, JsObject(grouped))
+   }
+
+   def group(names: List[String], groupName: String): JsObject = groupAndRename(names.map(k => (k, k)).toMap, groupName)
+
+   def mapChildrenToArray(children: Vector[String], arrayName: String): JsObject = {
+      val array = JsArray(children.map((key: String) => o.fields(key)))
+      removeKeys(children).updated(arrayName, array)
+   }
 }
