@@ -7,8 +7,9 @@ import spray.json._
 import com.radeusgd.jsonrewriter.implicits._
 
 object Example {
-   def transformJson(v: JsValue): JsValue = {
-      v.asJsObject.transformedPath("a.b.c", (_: JsValue) => JsNumber(0))
+   def transformJson(r: JsValue): JsValue = {
+      r.asJsObject.mapDescendant("a.b.c", (v: JsValue) => v.asJsNumber.map(_ + 1))
+         .rename("a", "root")
    }
 
    def main(args: Array[String]): Unit = {
@@ -23,9 +24,9 @@ object Example {
 
       val exampleText =
          """
-           |{"a":{"b":{"c":"d"}}}
+           |{"a":{"b":{"c":3}}}
            |{"a":{"b":{"c":30}}}
-           |{"a":{"b":{"c":null}}}
+           |{"a":{"b":{"c":5}}}
          """.stripMargin
 
       IO.processLines(transformJson, exampleText.lines).foreach(println)
